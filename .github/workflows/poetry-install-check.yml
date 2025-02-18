@@ -32,6 +32,3 @@ jobs:
         run: |
           pip install poetry
           poetry install --with dev
-
-      - name: Run back
-        run: poetry run python scripts/download_data_day_france.py
