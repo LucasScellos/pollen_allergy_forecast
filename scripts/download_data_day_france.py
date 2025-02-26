@@ -49,7 +49,7 @@ def retrieve_data():
         "date": get_today_date(),
         "type": ["forecast"],
         "time": ["00:00"],
-        "leadtime_hour": ["0", "2", "4", "6", "8", "10", "12", "16", "18", "20", "22", "24"],
+        "leadtime_hour": ["0", "2", "4", "6", "8", "10", "12", "16", "18", "20", "22", "24", "48", "72", "96"],
         "data_format": "netcdf_zip",
         "area": FRENCH_AREA
     }
