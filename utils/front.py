@@ -5,6 +5,8 @@ import logging
 from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
 import plotly.graph_objects as go
+import math 
+import numpy as np
 
 POLLEN_NAMES = {
     "apg_conc": "Alder Pollen",
@@ -114,7 +116,6 @@ def plot_pollen_concentration_hours(df, formatted_date, city_name):
 
     return fig
 
-
 def plot_pollen_concentration_days(df, formatted_date, city_name):
     """Plots pollen concentration over the next 4 days in a bar chart for better mobile display."""
     variables = ["apg_conc", "bpg_conc", "gpg_conc", "mpg_conc", "opg_conc"]
@@ -129,19 +130,54 @@ def plot_pollen_concentration_days(df, formatted_date, city_name):
                 hovertemplate=f"%{{x}}<br>{POLLEN_NAMES[pollen]}: %{{y:.1f}} grains/m³<extra></extra>",
             )
         )
+    
+    # Risk level references as shapes (adapted for log scale)
+    fig.add_shape(
+        type="rect", x0=-0.5, x1=len(df["date_label"])-0.5, y0=1, y1=25,
+        line=dict(width=0), fillcolor="rgba(0,255,0,0.1)", layer="below"
+    )
+    fig.add_shape(
+        type="rect", x0=-0.5, x1=len(df["date_label"])-0.5, y0=25, y1=100,
+        line=dict(width=0), fillcolor="rgba(255,165,0,0.1)", layer="below"
+    )
+    fig.add_shape(
+        type="rect", x0=-0.5, x1=len(df["date_label"])-0.5, y0=100, y1=500,
+        line=dict(width=0), fillcolor="rgba(255,0,0,0.1)", layer="below"
+    )
+    fig.add_shape(
+        type="rect", x0=-0.5, x1=len(df["date_label"])-0.5, y0=500, y1=max(df[variables].max()) + 50,
+        line=dict(width=0), fillcolor="rgba(128,0,0,0.1)", layer="below"
+    )
 
+    # Add risk level annotations (adjusted for log scale positions)
+    fig.add_annotation(
+        x=len(df["date_label"])-0.5, y=5, text="Low Risk",
+        showarrow=False, font=dict(size=10, color="green"), xanchor="right"
+    )
+    fig.add_annotation(
+        x=len(df["date_label"])-0.5, y=50, text="Moderate Risk",
+        showarrow=False, font=dict(size=10, color="orange"), xanchor="right"
+    )
+    fig.add_annotation(
+        x=len(df["date_label"])-0.5, y=250, text="High Risk",
+        showarrow=False, font=dict(size=10, color="red"), xanchor="right"
+    )
+    fig.add_annotation(
+        x=len(df["date_label"])-0.5, y=750, text="Very High Risk",
+        showarrow=False, font=dict(size=10, color="darkred"), xanchor="right"
+    )
+
+    # Update layout with logarithmic y-axis
     fig.update_layout(
         title="Daily Pollen Concentration Forecast",
-        # xaxis_title="Date",
         yaxis_title="Pollen Concentration (grains/m³)",
-        # barmode="group",
         height=400,
         margin=dict(l=60, r=60, t=80, b=80),
-        hovermode="x unified",
-        # legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+        hovermode="x unified"
     )
 
     return fig
+
 
 
 def preprocess_dataframe_days(dataset):
