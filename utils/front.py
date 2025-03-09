@@ -61,7 +61,7 @@ def preprocess_dataframe_hours(dataset):
 
 
 def plot_pollen_concentration_hours(df, formatted_date, city_name):
-    """Plots pollen concentration over the next 24 hours."""
+    """Plots pollen concentration over the next 24 hours in a mobile-friendly format."""
     variables = ["apg_conc", "bpg_conc", "gpg_conc", "mpg_conc", "opg_conc"]
     pollen_names = {
         "apg_conc": "Alder Pollen",
@@ -70,72 +70,33 @@ def plot_pollen_concentration_hours(df, formatted_date, city_name):
         "mpg_conc": "Mugwort Pollen",
         "opg_conc": "Olive Pollen"
     }
-    
+
     df = df[df["hours"] <= 24].copy()
-    df_melted = df.melt(id_vars=['formatted_hours', 'hours'], 
-                       value_vars=variables, 
-                       var_name='Pollen Type', 
-                       value_name='Concentration')
-    
-    # Map code names to readable names
+    df_melted = df.melt(id_vars=['formatted_hours'], value_vars=variables, var_name='Pollen Type', value_name='Concentration')
     df_melted['Pollen Type'] = df_melted['Pollen Type'].map(pollen_names)
-    
-    # Sort by hours for proper timeline
-    df_melted = df_melted.sort_values('hours')
-    
+
     fig = px.line(df_melted, x='formatted_hours', y='Concentration', color='Pollen Type',
                   title='Hourly Pollen Concentration Forecast',
                   labels={'formatted_hours': 'Time', 'Concentration': 'Pollen Concentration (grains/m³)'},
                   line_shape="spline")
 
     fig.update_layout(
-        legend_title_text='Pollen Type',
         xaxis_title=f"Hours ({formatted_date})",
         yaxis_title='Pollen Concentration (grains/m³)',
-        height=500,
+        height=400,
         margin=dict(l=60, r=40, t=80, b=80),
         hovermode="x unified"
     )
 
-    # Improve x-axis formatting
-    fig.update_xaxes(
-        tickangle=-45,
-        tickmode='array',
-        tickvals=df_melted['formatted_hours'].unique()
-    )
-
-    # Add Subtitle Below X-Axis
-    fig.add_annotation(
-        x=0.5,
-        y=-0.25,
-        xref="paper",
-        yref="paper",
-        text=f"Location: {city_name}",
-        showarrow=False,
-        font=dict(size=12, color="gray")
-    )
+    fig.update_xaxes(tickangle=-45)
 
     return fig
 
 
+
 def plot_pollen_concentration_days(df, formatted_date, city_name):
-    """
-    Plots maximum daily pollen concentrations with grouped bar chart.
-    Uses one bar per day for each pollen type, showing the maximum value.
-    
-    Parameters:
-        df (DataFrame): Processed DataFrame containing aggregated daily data
-                       with date_label and pollen concentration columns
-        formatted_date (str): Date string for chart subtitle
-        city_name (str): Name of the location for chart subtitle
-    
-    Returns:
-        fig (plotly.graph_objects.Figure): Plotly figure with daily pollen forecast
-    """
-    # List of pollen concentration columns
+    """Plots pollen concentration over the next 4 days in a bar chart for better mobile display."""
     variables = ["apg_conc", "bpg_conc", "gpg_conc", "mpg_conc", "opg_conc"]
-    
-    # Readable pollen names for legend
     pollen_names = {
         "apg_conc": "Alder Pollen",
         "bpg_conc": "Birch Pollen",
@@ -143,146 +104,27 @@ def plot_pollen_concentration_days(df, formatted_date, city_name):
         "mpg_conc": "Mugwort Pollen",
         "opg_conc": "Olive Pollen"
     }
-    
-    # Color scheme for different pollen types
-    pollen_colors = {
-        "apg_conc": "#1f77b4",  # Blue
-        "bpg_conc": "#ff7f0e",  # Orange
-        "gpg_conc": "#2ca02c",  # Green
-        "mpg_conc": "#d62728",  # Red
-        "opg_conc": "#9467bd"   # Purple
-    }
-    
-    # Create a plotly figure
+
     fig = go.Figure()
-    
-    # Add traces for each pollen type
     for pollen in variables:
         fig.add_trace(go.Bar(
             x=df["date_label"],
             y=df[pollen],
             name=pollen_names[pollen],
-            marker_color=pollen_colors[pollen],
-            hovertemplate="<b>%{x}</b><br>" +
-                          f"{pollen_names[pollen]}: %{{y:.1f}} grains/m³<br>" +
-                          "<extra></extra>"
+            hovertemplate=f"%{{x}}<br>{pollen_names[pollen]}: %{{y:.1f}} grains/m³<extra></extra>"
         ))
-    
-    # Risk level references as shapes
-    fig.add_shape(
-        type="rect",
-        x0=-0.5,
-        x1=len(df["date_label"])-0.5,
-        y0=0,
-        y1=10,
-        line=dict(width=0),
-        fillcolor="rgba(0,255,0,0.1)",
-        layer="below"
-    )
-    
-    fig.add_shape(
-        type="rect",
-        x0=-0.5,
-        x1=len(df["date_label"])-0.5,
-        y0=10,
-        y1=30,
-        line=dict(width=0),
-        fillcolor="rgba(255,165,0,0.1)",
-        layer="below"
-    )
-    
-    fig.add_shape(
-        type="rect",
-        x0=-0.5,
-        x1=len(df["date_label"])-0.5,
-        y0=30,
-        y1=50,
-        line=dict(width=0),
-        fillcolor="rgba(255,0,0,0.1)",
-        layer="below"
-    )
-    
-    fig.add_shape(
-        type="rect",
-        x0=-0.5,
-        x1=len(df["date_label"])-0.5,
-        y0=50,
-        y1=100,
-        line=dict(width=0),
-        fillcolor="rgba(128,0,0,0.1)",
-        layer="below"
-    )
-    
-    # Add risk level annotations
-    fig.add_annotation(
-        x=len(df["date_label"])-0.5,
-        y=5,
-        text="Low Risk",
-        showarrow=False,
-        font=dict(size=10, color="green"),
-        xanchor="right"
-    )
-    
-    fig.add_annotation(
-        x=len(df["date_label"])-0.5,
-        y=20,
-        text="Moderate Risk",
-        showarrow=False,
-        font=dict(size=10, color="orange"),
-        xanchor="right"
-    )
-    
-    fig.add_annotation(
-        x=len(df["date_label"])-0.5,
-        y=40,
-        text="High Risk",
-        showarrow=False,
-        font=dict(size=10, color="red"),
-        xanchor="right"
-    )
-    
-    fig.add_annotation(
-        x=len(df["date_label"])-0.5,
-        y=75,
-        text="Very High Risk",
-        showarrow=False,
-        font=dict(size=10, color="darkred"),
-        xanchor="right"
-    )
-    
-    # Update layout
+
     fig.update_layout(
-        title="Daily Maximum Pollen Concentration Forecast",
+        title="Daily Pollen Concentration Forecast",
         xaxis_title="Date",
-        yaxis_title="Maximum Pollen Concentration (grains/m³)",
+        yaxis_title="Pollen Concentration (grains/m³)",
         barmode="group",
-        height=500,
+        height=400,
         margin=dict(l=60, r=60, t=80, b=80),
         hovermode="x unified",
-        legend=dict(
-            title="Pollen Type",
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="center",
-            x=0.5
-        )
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
     )
-    
-    # Add a subtitle with city name and forecast date
-    fig.add_annotation(
-        x=0.5,
-        y=-0.25,
-        xref="paper",
-        yref="paper",
-        text=f"Location: {city_name} | Forecast from: {formatted_date}",
-        showarrow=False,
-        font=dict(size=12, color="gray")
-    )
-    
-    # Ensure y-axis starts at zero and has reasonable range
-    fig.update_yaxes(rangemode="nonnegative")
-    
+
     return fig
 # def plot_pollen_concentration_days(df, formatted_date, city_name):
     """
