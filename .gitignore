@@ -32,3 +32,4 @@ data/raw_data/
 data/processed_data/
 data/*.zip
 data/*.nc  #
+*.txt
