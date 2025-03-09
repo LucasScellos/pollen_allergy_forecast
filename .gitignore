@@ -1,0 +1,34 @@
+# General OS files
+.DS_Store
+Thumbs.db
+
+# Python & Virtual Environment
+__pycache__/
+*.py[cod]
+*.so
+*.swp
+*.swo
+venv/
+.env
+*.env
+*.venv
+
+# Poetry & Dependencies
+poetry.lock
+.cache/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# Streamlit Temporary Files
+.streamlit/
+secrets.toml
+
+# Data Files
+data/raw_data/
+data/processed_data/
+data/*.zip
+data/*.nc  #
