@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Public+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#f7f9fb",
+            "surface-container-high": "#e3e9ec",
+            "primary-dim": "#1f5e44",
+            "surface-container-lowest": "#ffffff",
+            "on-background": "#2d3337",
+            "secondary": "#0060ae",
+            "tertiary-container": "#ffab69",
+            "inverse-on-surface": "#9a9d9f",
+            "on-primary-container": "#1d5c42",
+            "on-primary": "#e6ffee",
+            "outline-variant": "#acb3b7",
+            "error-dim": "#821a01",
+            "on-surface-variant": "#596063",
+            "on-tertiary-container": "#5d2e00",
+            "surface": "#f7f9fb",
+            "on-primary-fixed-variant": "#29664c",
+            "inverse-primary": "#beffdc",
+            "primary": "#2d6a4f",
+            "secondary-container": "#d4e3ff",
+            "on-tertiary-fixed": "#3e1d00",
+            "surface-tint": "#2d6a4f",
+            "surface-bright": "#f7f9fb",
+            "secondary-dim": "#005499",
+            "tertiary-fixed": "#ffab69",
+            "on-error-container": "#671200",
+            "on-secondary-fixed-variant": "#005ca8",
+            "primary-fixed": "#b1f0ce",
+            "on-secondary-container": "#005397",
+            "on-tertiary": "#fff7f4",
+            "error-container": "#fa7150",
+            "surface-container": "#eaeef1",
+            "on-error": "#fff7f6",
+            "tertiary-dim": "#804307",
+            "surface-container-low": "#f1f4f6",
+            "primary-fixed-dim": "#a3e2c0",
+            "surface-container-highest": "#dde3e7",
+            "on-secondary": "#f8f8ff",
+            "surface-dim": "#d3dbdf",
+            "surface-variant": "#dde3e7",
+            "secondary-fixed-dim": "#bcd6ff",
+            "tertiary-fixed-dim": "#ef9e5d",
+            "on-secondary-fixed": "#004077",
+            "primary-container": "#b1f0ce",
+            "on-surface": "#2d3337",
+            "on-primary-fixed": "#014931",
+            "on-tertiary-fixed-variant": "#6a3500",
+            "inverse-surface": "#0b0f10",
+            "tertiary": "#8f4f14",
+            "outline": "#757c7f",
+            "error": "#aa371c",
+            "secondary-fixed": "#d4e3ff"
+          },
+          fontFamily: {
+            "headline": ["Manrope"],
+            "body": ["Public Sans"],
+            "label": ["Public Sans"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body { font-family: 'Public Sans', sans-serif; }
+    h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+    body { min-height: max(884px, 100dvh); }
+    [v-cloak] { display: none; }
+  </style>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-24" id="app" v-cloak>
+
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-emerald-50/80 backdrop-blur-xl shadow-sm flex justify-between items-center px-6 py-4 w-full">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-emerald-900" data-icon="location_on">location_on</span>
+    <span class="font-manrope text-xl font-bold text-emerald-900">{{ loading ? "Loading..." : city_name }}</span>
+  </div>
+  <div class="w-10 h-10 rounded-full bg-primary-container overflow-hidden border-2 border-white">
+    <img alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOrIn9DuDl-NnIltQ2NBwKy3TFwVRWMRxErr_zqyclcfSt4-5puKN52VRcJ7n_e_77em8wUjfwJQ0VR2W_jlkJKbvZ1NIwhBy3W8LA8OfAFG3QF1BAkawXqzv2BgK79HO_yjj7qj6yXnJLMloQ4x2EHuFM6WJ7b-jJiFBu9oSzNSdUa9e09t7o6UIOeMRQHD_qQfCw9jQrsjCvZ5I_AzwBR0bVwuavjSB5P1Fq5qDNzAcKeU3HZpRJncPhAfk8nAW3wRjtfyz-Lr4"/>
+  </div>
+</header>
+
+<main class="pt-24 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto space-y-12">
+  <!-- Hero Section -->
+  <section class="space-y-4">
+    <div class="flex gap-4 mb-4">
+      <input v-model="searchInput" type="text" placeholder="Enter Location (e.g. Paris 10, France)" class="rounded shadow px-4 py-2 w-full max-w-md">
+      <button @click="fetchForecast(searchInput)" class="bg-primary text-white px-4 py-2 rounded shadow hover:bg-primary-dim">Search</button>
+    </div>
+    <p class="font-label text-sm uppercase tracking-widest text-secondary font-semibold">Atmospheric Forecast</p>
+    <h1 class="text-5xl md:text-6xl font-headline font-extrabold tracking-tight text-on-surface">Pollen Outlook</h1>
+    <p class="text-on-surface-variant text-lg max-w-xl">A detailed 5-day view of regional allergy triggers and atmospheric conditions.</p>
+  </section>
+
+  <!-- Loading State -->
+  <div v-if="loading" class="flex justify-center p-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+  </div>
+
+  <template v-else>
+    <!-- 5-Day Horizontal Forecast -->
+    <section class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <!-- Active Day (Today) -->
+      <div v-if="days.length > 0" class="col-span-2 md:col-span-2 bg-primary-container/40 p-8 rounded-xl border-0 flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 opacity-10">
+          <span class="material-symbols-outlined text-[120px]" data-icon="potted_plant">potted_plant</span>
+        </div>
+        <div>
+          <span class="bg-primary text-on-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 inline-block">Today</span>
+          <h3 class="text-4xl font-headline font-bold text-primary-dim">{{ getLevelText(getMaxTotal(days[0])) }}</h3>
+        </div>
+        <div class="mt-8">
+          <p class="text-on-surface-variant font-medium">{{ days[0].date_label }}</p>
+          <p class="text-3xl font-headline font-extrabold text-on-surface">{{ getMaxTotal(days[0]) }}<span class="text-sm font-normal text-on-surface-variant ml-1"> ppm max</span></p>
+        </div>
+      </div>
+
+      <!-- Other Days -->
+      <div v-for="(day, idx) in days.slice(1)" :key="idx" class="bg-surface-container-low p-6 rounded-xl flex flex-col items-center justify-center text-center space-y-3 transition-transform hover:scale-[1.02]">
+        <p class="font-label text-on-surface-variant text-xs uppercase font-bold">{{ day.date_label }}</p>
+        <div class="w-12 h-12 rounded-full flex items-center justify-center" :class="{
+          'bg-primary-container/30 text-primary': getLevelText(getMaxTotal(day)) == 'Low',
+          'bg-tertiary-container/30 text-tertiary': getLevelText(getMaxTotal(day)) == 'Moderate',
+          'bg-error-container/30 text-error': ['High', 'Severe'].includes(getLevelText(getMaxTotal(day)))
+        }">
+          <span class="material-symbols-outlined" data-icon="nature">nature</span>
+        </div>
+        <p class="font-headline font-bold text-xl">{{ getMaxTotal(day) }}</p>
+        <p class="text-[10px] uppercase font-bold" :class="{
+          'text-on-primary-container': getLevelText(getMaxTotal(day)) == 'Low',
+          'text-tertiary-dim': getLevelText(getMaxTotal(day)) == 'Moderate',
+          'text-error-dim': ['High', 'Severe'].includes(getLevelText(getMaxTotal(day)))
+        }">{{ getLevelText(getMaxTotal(day)) }}</p>
+      </div>
+    </section>
+
+    <!-- Specific Allergen Bar Charts -->
+    <section v-if="days.length > 0" class="bg-surface-container-lowest p-8 md:p-12 rounded-xl shadow-sm space-y-10">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 class="text-3xl font-headline font-bold text-on-surface">Allergen Breakdown</h2>
+          <p class="text-on-surface-variant mt-2 italic">Specific concentrations for {{ days[0].date_label }}</p>
+        </div>
+      </div>
+      
+      <div class="grid gap-8">
+        <!-- Allergen Bars dynamically mapped -->
+        <div v-for="allergen in getPollenList(days[0])" :key="allergen.name" class="space-y-3">
+          <div class="flex justify-between items-end">
+            <span class="font-headline font-bold text-lg">{{ allergen.name }}</span>
+            <span class="font-label font-bold" :class="allergen.colorClass">{{ allergen.level }} · {{ allergen.value }} ppm</span>
+          </div>
+          <div class="h-4 w-full bg-surface-container rounded-full overflow-hidden">
+            <div class="h-full rounded-full" :class="allergen.bgClass" :style="{ width: getPercentage(allergen.value) + '%' }"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <!-- Health Tips Section -->
+  <section class="space-y-6">
+    <h2 class="text-3xl font-headline font-bold px-2">Health Recommendations</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="bg-secondary-container/20 p-8 rounded-xl border-l-4 border-secondary space-y-4">
+        <span class="material-symbols-outlined text-secondary text-3xl" data-icon="window">window</span>
+        <h4 class="font-headline font-bold text-xl">Close Your Windows</h4>
+        <p class="text-on-surface-variant leading-relaxed">Pollen counts are highest in the early morning. Keep windows sealed to maintain indoor air quality.</p>
+      </div>
+      <div class="bg-primary-container/20 p-8 rounded-xl border-l-4 border-primary space-y-4">
+        <span class="material-symbols-outlined text-primary text-3xl" data-icon="wash">wash</span>
+        <h4 class="font-headline font-bold text-xl">Shower After Outings</h4>
+        <p class="text-on-surface-variant leading-relaxed">Pollen sticks to hair and clothes. A quick rinse after being outdoors can significantly reduce nighttime triggers.</p>
+      </div>
+      <div class="bg-tertiary-container/20 p-8 rounded-xl border-l-4 border-tertiary space-y-4">
+        <span class="material-symbols-outlined text-tertiary text-3xl" data-icon="masks">masks</span>
+        <h4 class="font-headline font-bold text-xl">Protective Gear</h4>
+        <p class="text-on-surface-variant leading-relaxed">Consider wearing a mask if doing yard work today, as the allergy count can be high in your area.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-20 bg-emerald-50/90 backdrop-blur-2xl flex justify-around items-center px-4 pb-safe z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+  <a class="flex flex-col items-center justify-center text-emerald-700/60 px-5 py-2 hover:text-emerald-900 transition-transform active:scale-95" href="#">
+    <span class="material-symbols-outlined" data-icon="home">home</span>
+    <span class="font-manrope font-semibold text-[11px] tracking-wide uppercase mt-1">Home</span>
+  </a>
+  <a class="flex flex-col items-center justify-center bg-emerald-200/50 text-emerald-900 rounded-2xl px-5 py-2 translate-y-[-2px] transition-transform" href="#">
+    <span class="material-symbols-outlined" data-icon="wb_sunny">wb_sunny</span>
+    <span class="font-manrope font-semibold text-[11px] tracking-wide uppercase mt-1">Forecast</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-emerald-700/60 px-5 py-2 hover:text-emerald-900 transition-transform active:scale-95" href="#">
+    <span class="material-symbols-outlined" data-icon="person">person</span>
+    <span class="font-manrope font-semibold text-[11px] tracking-wide uppercase mt-1">Profile</span>
+  </a>
+</nav>
+
+<script>
+  const { createApp, ref, onMounted } = Vue;
+
+  createApp({
+    setup() {
+      const city_name = ref('Loading...');
+      const searchInput = ref('Paris 10, France');
+      const days = ref([]);
+      const loading = ref(true);
+
+      const fetchForecast = async (address) => {
+        loading.value = true;
+        try {
+          const res = await fetch(`/api/forecast?address=${encodeURIComponent(address)}`);
+          if (!res.ok) throw new Error('Failed to fetch data');
+          const data = await res.json();
+          city_name.value = data.city_name;
+          days.value = data.days;
+        } catch (err) {
+          console.error(err);
+          alert('Error loading data. Are you sure the backend location is valid?');
+        } finally {
+          loading.value = false;
+        }
+      };
+
+      const getLevelText = (val) => {
+        if (val < 25) return 'Low';
+        if (val < 100) return 'Moderate';
+        if (val < 500) return 'High';
+        return 'Severe';
+      };
+
+      const getMaxTotal = (day) => {
+        return Math.round(Math.max(
+          day.apg_conc || 0,
+          day.bpg_conc || 0,
+          day.gpg_conc || 0,
+          day.mpg_conc || 0,
+          day.opg_conc || 0
+        ));
+      };
+
+      const getPercentage = (val) => {
+        return Math.min(100, Math.max(0, (val / 500) * 100));
+      };
+
+      const getPollenList = (day) => {
+        const mappings = [
+          { key: 'apg_conc', name: 'Alder (Tree)' },
+          { key: 'bpg_conc', name: 'Birch (Tree)' },
+          { key: 'gpg_conc', name: 'Grass' },
+          { key: 'mpg_conc', name: 'Mugwort (Weed)' },
+          { key: 'opg_conc', name: 'Olive (Tree)' },
+        ];
+        
+        return mappings.map(m => {
+          const val = Math.round(day[m.key] || 0);
+          const lvl = getLevelText(val);
+          
+          let colorClass, bgClass;
+          if (lvl === 'Low') { colorClass = 'text-on-primary-container'; bgClass = 'bg-on-primary-container'; }
+          else if (lvl === 'Moderate') { colorClass = 'text-primary'; bgClass = 'bg-primary'; }
+          else if (lvl === 'High') { colorClass = 'text-tertiary'; bgClass = 'bg-tertiary'; }
+          else { colorClass = 'text-error'; bgClass = 'bg-error'; }
+
+          return {
+            name: m.name,
+            value: val,
+            level: lvl,
+            colorClass,
+            bgClass
+          };
+        }).sort((a,b) => b.value - a.value);
+      };
+
+      onMounted(() => {
+        fetchForecast(searchInput.value);
+      });
+
+      return {
+        city_name,
+        searchInput,
+        days,
+        loading,
+        fetchForecast,
+        getLevelText,
+        getMaxTotal,
+        getPercentage,
+        getPollenList
+      };
+    }
+  }).mount('#app');
+</script>
+</body>
+</html>
