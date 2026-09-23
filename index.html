@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Pollen Forecast · 4-day pollen forecast for Europe</title>
+    <meta
+      name="description"
+      content="Free 4-day hourly pollen forecast (birch, grass, ragweed, olive, alder, mugwort) for any place in Europe, powered by Copernicus CAMS."
+    />
+    <meta name="theme-color" content="#f6f7f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <link rel="preconnect" href="https://air-quality-api.open-meteo.com" crossorigin />
+    <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin />
+    <meta property="og:title" content="Pollen Forecast" />
+    <meta property="og:description" content="4-day hourly pollen forecast for anywhere in Europe." />
+    <meta property="og:type" content="website" />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        const t = JSON.parse(localStorage.getItem('pollen:theme'));
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
