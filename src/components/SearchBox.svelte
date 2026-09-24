@@ -2,13 +2,24 @@
   import { searchPlaces, type Place } from '../lib/api';
   import { i18n } from '../lib/i18n.svelte';
 
-  let { onselect }: { onselect: (place: Place) => void } = $props();
+  let {
+    onselect,
+    near = null,
+  }: {
+    onselect: (place: Place) => void;
+    /** Current place, used to rank nearby results first. */
+    near?: Pick<Place, 'latitude' | 'longitude'> | null;
+  } = $props();
 
   let query = $state('');
   let results = $state<Place[]>([]);
   let open = $state(false);
   let active = $state(-1);
   let searching = $state(false);
+  /** The list shows results for an older query: dimmed and not selectable. */
+  let stale = $state(false);
+  /** Enter was pressed while stale: pick the first fresh result when it arrives. */
+  let enterPending = false;
   let controller: AbortController | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -17,23 +28,32 @@
   function oninput() {
     clearTimeout(timer);
     controller?.abort();
+    enterPending = false;
     const q = query.trim();
     if (q.length < 2) {
       results = [];
       open = false;
+      stale = false;
       return;
     }
+    stale = true;
     timer = setTimeout(async () => {
-      controller = new AbortController();
+      const current = (controller = new AbortController());
       searching = true;
       try {
-        results = await searchPlaces(q, i18n.lang, controller.signal);
+        results = await searchPlaces(q, i18n.lang, current.signal, near);
         active = results.length ? 0 : -1;
         open = true;
+        stale = false;
+        if (enterPending && results.length) choose(results[0]);
       } catch (e) {
-        if ((e as Error).name !== 'AbortError') results = [];
+        if ((e as Error).name !== 'AbortError') {
+          results = [];
+          stale = false;
+        }
       } finally {
-        searching = false;
+        if (controller === current) searching = false;
+        enterPending = false;
       }
     }, 250);
   }
@@ -47,6 +67,11 @@
   }
 
   function onkeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' && stale) {
+      e.preventDefault();
+      enterPending = true;
+      return;
+    }
     if (!open || !results.length) {
       if (e.key === 'Escape') query = '';
       return;
@@ -89,10 +114,10 @@
     onfocus={() => (open = results.length > 0)}
     onblur={() => setTimeout(() => (open = false), 150)}
   />
-  {#if searching}<span class="spinner" aria-hidden="true"></span>{/if}
+  {#if stale || searching}<span class="spinner" aria-hidden="true"></span>{/if}
 
   {#if open}
-    <ul class="results" id={listId} role="listbox">
+    <ul class="results" class:stale id={listId} role="listbox" aria-busy={stale}>
       {#each results as place, i (`${place.latitude},${place.longitude}`)}
         <li
           id="place-opt-{i}"
@@ -183,6 +208,10 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  }
+  .results.stale {
+    opacity: 0.5;
+    pointer-events: none;
   }
   li {
     display: flex;

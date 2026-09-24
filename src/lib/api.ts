@@ -2,7 +2,8 @@ import { buildForecast, POLLEN_KEYS, type Forecast, type RawAirQualityResponse }
 
 const AIR_QUALITY_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
-const REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
+const PHOTON_URL = 'https://photon.komoot.io/api/';
+const REVERSE_URL ='https://nominatim.openstreetmap.org/reverse';
 
 export interface Place {
   name: string;
@@ -57,29 +58,125 @@ export async function fetchForecast(
   return data;
 }
 
+/** Roughly the CAMS Europe domain, as minLon,minLat,maxLon,maxLat. */
+const EUROPE_BBOX = '-25,30,45,72';
+const PLACE_TAGS = ['city', 'town', 'village', 'municipality', 'suburb', 'quarter', 'hamlet'];
+const MAX_RESULTS = 6;
+
+export interface PhotonFeature {
+  geometry: { coordinates: [number, number] };
+  properties: {
+    name?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+  };
+}
+
+/** Photon features → places: builds the detail line and drops duplicates. */
+export function placesFromPhoton(features: PhotonFeature[]): Place[] {
+  const seen = new Set<string>();
+  const places: Place[] = [];
+  for (const { geometry, properties: p } of features) {
+    if (!p.name) continue;
+    const [longitude, latitude] = geometry.coordinates;
+    const region = p.county ?? p.state;
+    const detail = [p.city !== p.name ? p.city : undefined, region, p.country]
+      .filter((part, i, all) => part && all.indexOf(part) === i)
+      .join(', ');
+    const key = `${p.name}|${region ?? ''}|${p.country ?? ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    places.push({ name: p.name, detail, latitude, longitude });
+    if (places.length === MAX_RESULTS) break;
+  }
+  return places;
+}
+
+/**
+ * City search. Photon (OpenStreetMap, typo-tolerant, built for autocomplete)
+ * handles "saint philbert de grand lieu", "st philbert…" and typos; Open-Meteo
+ * is the fallback if Photon is unavailable.
+ */
+export async function searchPlaces(
+  query: string,
+  language: string,
+  signal?: AbortSignal,
+  near?: { latitude: number; longitude: number } | null,
+): Promise<Place[]> {
+  try {
+    return await searchPhoton(query, language, signal, near);
+  } catch (e) {
+    if ((e as Error).name === 'AbortError') throw e;
+    return searchOpenMeteo(query, language, signal);
+  }
+}
+
+async function searchPhoton(
+  query: string,
+  language: string,
+  signal?: AbortSignal,
+  near?: { latitude: number; longitude: number } | null,
+): Promise<Place[]> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: '12',
+    lang: language === 'fr' ? 'fr' : 'en',
+    bbox: EUROPE_BBOX,
+  });
+  for (const tag of PLACE_TAGS) params.append('osm_tag', `place:${tag}`);
+  if (near) {
+    // Mild bias toward the current place, so "Nantes" means the nearby one.
+    params.set('lat', near.latitude.toFixed(2));
+    params.set('lon', near.longitude.toFixed(2));
+    params.set('location_bias_scale', '0.2');
+  }
+  const res = await fetch(`${PHOTON_URL}?${params}`, { signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const body: { features?: PhotonFeature[] } = await res.json();
+  return placesFromPhoton(body.features ?? []);
+}
+
 interface GeocodingResult {
   name: string;
   latitude: number;
   longitude: number;
   country?: string;
   admin1?: string;
+  admin2?: string;
 }
 
-export async function searchPlaces(
+/** Open-Meteo matches official names word by word, so also try the hyphenated form. */
+async function searchOpenMeteo(
   query: string,
   language: string,
   signal?: AbortSignal,
 ): Promise<Place[]> {
-  const params = new URLSearchParams({ name: query, count: '6', language, format: 'json' });
-  const res = await fetch(`${GEOCODING_URL}?${params}`, { signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const body: { results?: GeocodingResult[] } = await res.json();
-  return (body.results ?? []).map((r) => ({
-    name: r.name,
-    detail: [r.admin1, r.country].filter(Boolean).join(', '),
-    latitude: r.latitude,
-    longitude: r.longitude,
-  }));
+  const variants = [...new Set([query, query.trim().replace(/\s+/g, '-')])];
+  const responses = await Promise.all(
+    variants.map(async (name) => {
+      const params = new URLSearchParams({ name, count: '6', language, format: 'json' });
+      const res = await fetch(`${GEOCODING_URL}?${params}`, { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body: { results?: GeocodingResult[] } = await res.json();
+      return body.results ?? [];
+    }),
+  );
+  const seen = new Set<string>();
+  return responses
+    .flat()
+    .filter((r) => {
+      const key = `${r.latitude.toFixed(3)},${r.longitude.toFixed(3)}`;
+      return !seen.has(key) && !!seen.add(key);
+    })
+    .slice(0, MAX_RESULTS)
+    .map((r) => ({
+      name: r.name,
+      detail: [r.admin2, r.admin1, r.country].filter(Boolean).join(', '),
+      latitude: r.latitude,
+      longitude: r.longitude,
+    }));
 }
 
 /** Best-effort place name for coordinates (geolocation / map click). */
