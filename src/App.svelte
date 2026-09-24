@@ -170,7 +170,7 @@
 <main>
   <section class="finder" aria-label={i18n.t.searchLabel}>
     <div class="finder-row">
-      <SearchBox onselect={show} />
+      <SearchBox onselect={show} near={place} />
       <button type="button" class="btn" onclick={locate} disabled={locating}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2" />

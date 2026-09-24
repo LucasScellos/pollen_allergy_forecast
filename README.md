@@ -9,7 +9,7 @@
 - **Today's risk at a glance**: overall level, main allergen, and what to do about it
 - **6 allergens**: alder, birch, olive, grasses, mugwort, ragweed, each with its own risk thresholds
 - **4-day outlook** and an interactive **hourly chart** (crosshair tooltip, keyboard navigation, table view)
-- **Find a place** by searching a city, using your location, or clicking on the map
+- **Find a place** by searching a city (tolerates typos, missing hyphens, "st" for "saint"), using your location, or clicking on the map
 - **FR / EN**, **light / dark** themes, mobile-first, **installable** (PWA) and usable offline with the last loaded data
 - **Shareable links**: the URL carries the location (`?lat=…&lon=…&name=…`)
 
@@ -17,7 +17,7 @@
 
 ```
 Browser ──► Open-Meteo Air Quality API  (CAMS European ensemble, hourly, no API key)
-        ──► Open-Meteo Geocoding API    (city search)
+        ──► Photon (komoot)             (typo-tolerant city search; Open-Meteo Geocoding as fallback)
         ──► Nominatim                   (place name for "my location" / map clicks)
 
 GitHub Actions ──► type-check · unit tests · build ──► GitHub Pages (free static hosting + CDN)
@@ -85,7 +85,8 @@ src/
 ├── lib/
 │   ├── pollen.ts              # allergens, thresholds, daily aggregation (pure, tested)
 │   ├── pollen.test.ts
-│   ├── api.ts                 # Open-Meteo + Nominatim clients, in-memory cache
+│   ├── api.ts                 # forecast + geocoding clients, in-memory cache
+│   ├── api.test.ts
 │   ├── i18n.svelte.ts         # FR/EN dictionaries and date formatting
 │   └── storage.ts             # safe localStorage helpers
 └── components/
@@ -118,7 +119,7 @@ are indicative and are **not medical advice**.
 ## Data & credits
 
 - Forecasts: [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/), served by [Open-Meteo](https://open-meteo.com/) (CC BY 4.0)
-- Geocoding: [Open-Meteo](https://open-meteo.com/en/docs/geocoding-api) and [Nominatim](https://nominatim.org/) / © OpenStreetMap contributors
+- Geocoding: [Photon](https://photon.komoot.io/) by komoot, [Open-Meteo](https://open-meteo.com/en/docs/geocoding-api) and [Nominatim](https://nominatim.org/), with data © OpenStreetMap contributors
 - Map tiles: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
 
 The Open-Meteo free tier is for non-commercial use (up to 10,000 calls a day).
